@@ -30,8 +30,6 @@ Tool Calls:
   github_directory_structure
   Args:
     repo_url: https://github.com/JetBrains/mcp-jetbrains
-   Built mcp-git-ingest @ file:///home/adhikasp/mcp-git-ingest
-
 
 Now, I'll read the important files to understand how the code works:
 
