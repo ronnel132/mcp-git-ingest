@@ -69,7 +69,6 @@ This is a JetBrains MCP (Model Context Protocol) Proxy Server that acts as an in
 
 6. Usage:
 To use with Claude Desktop, users add a configuration in `claude_desktop_config.json`:
-```json
 {
   "mcpServers": {
     "jetbrains": {
@@ -78,7 +77,6 @@ To use with Claude Desktop, users add a configuration in `claude_desktop_config.
     }
   }
 }
-```
 
 7. Build & Run:
 - Requires Node.js and pnpm
