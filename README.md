@@ -6,6 +6,7 @@ Inspired by [gitingest](https://gitingest.com/).
 
 ## Configuration
 
+```json
 {
     "mcpServers": {
         "mcp-git-ingest": {
@@ -14,8 +15,11 @@ Inspired by [gitingest](https://gitingest.com/).
         }
     }
 }
+```
 
 ## Usage
+
+Using [mcp-client-cli](https://github.com/adhikasp/mcp-client-cli):
 
 ```
 $ llm read https://github.com/JetBrains/mcp-jetbrains dir structure and determine the important files. How does the code works?
