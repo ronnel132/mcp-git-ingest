@@ -22,68 +22,86 @@ Inspired by [gitingest](https://gitingest.com/).
 Using [mcp-client-cli](https://github.com/adhikasp/mcp-client-cli):
 
 ```
-$ llm read https://github.com/JetBrains/mcp-jetbrains dir structure and determine the important files. How does the code works?
+$ llm read https://github.com/adhikasp/mcp-git-ingest and determine how the code technically works
 
-I'll help you explore the GitHub repository for mcp-jetbrains by first examining its directory structure and then reading its important files.
+I'll help you understand the technical details of the mcp-git-ingest repository. I'll first fetch the directory structure and then read the important files to analyze how the code works.
 
 Tool Calls:
   github_directory_structure
   Args:
-    repo_url: https://github.com/JetBrains/mcp-jetbrains
+    repo_url: https://github.com/adhikasp/mcp-git-ingest
 
-Now, I'll read the important files to understand how the code works:
+Now, I'll read the important files to understand the technical implementation:
 
 Tool Calls:
   github_read_important_files
   Args:
-    repo_url: https://github.com/JetBrains/mcp-jetbrains
-    file_paths: ['README.md', 'src/index.ts', 'package.json']
+    repo_url: https://github.com/adhikasp/mcp-git-ingest
+    file_paths: ['README.md', 'src/mcp_git_ingest/main.py', 'pyproject.toml']
 
-
-Let me break down how this code works:
+Let me break down how this code technically works:
 
 1. Purpose:
-This is a JetBrains MCP (Model Context Protocol) Proxy Server that acts as an intermediary between a client (like Claude Desktop) and JetBrains IDEs.
+The `mcp-git-ingest` is a Model Context Protocol (MCP) server designed to help read GitHub repository structures and important files. It provides two main tools:
+- `github_directory_structure`: Returns a tree-like representation of a repository's directory structure
+- `github_read_important_files`: Reads and returns the contents of specified files in a repository
 
-2. Key Components:
-- The main logic is in `src/index.ts`
-- It's a TypeScript project using the `@modelcontextprotocol/sdk`
-- Uses stdio (standard input/output) for communication
+2. Technical Implementation:
 
-3. Core Functionality:
-- Dynamically finds a running JetBrains IDE by:
-  a. Checking a specific port if `IDE_PORT` is set in environment
-  b. Scanning ports 63342-63352 to find a responsive IDE
-  c. Sends requests to the IDE's built-in webserver
+a. Dependencies:
+- Uses `fastmcp` for creating an MCP server
+- Uses `gitpython` for Git repository operations
+- Requires Python 3.8+
 
-4. Key Functions:
-- `findWorkingIDEEndpoint()`: Discovers a running JetBrains IDE
-- `testListTools()`: Checks if an IDE endpoint is responsive
-- `handleToolCall()`: Forwards tool calls to the IDE and returns results
+b. Key Functions:
 
-5. Server Capabilities:
-- Supports listing available tools
-- Allows calling tools on the IDE
-- Periodically checks for IDE availability (every 10 seconds)
-- Sends notifications if tools list changes
+`clone_repo(repo_url: str) -> str`:
+- Creates a deterministic temporary directory based on the repository URL's hash
+- Checks if the repository is already cloned
+- If not, clones the repository
+- Handles error cases and cleanup
+- Returns the path to the cloned repository
 
-6. Usage:
-To use with Claude Desktop, users add a configuration in `claude_desktop_config.json`:
-{
-  "mcpServers": {
-    "jetbrains": {
-      "command": "npx",
-      "args": ["-y", "@jetbrains/mcp-proxy"]
-    }
-  }
-}
+`get_directory_tree(path: str, prefix: str = "") -> str`:
+- Recursively generates a tree-like directory structure
+- Skips `.git` directories
+- Uses Unicode box-drawing characters to create a visual tree representation
+- Handles sorting of entries
 
-7. Build & Run:
-- Requires Node.js and pnpm
-- Build command: `pnpm build`
-- Runs as a CLI tool via `npx @jetbrains/mcp-proxy`
+`github_directory_structure(repo_url: str) -> str`:
+- Clones the repository
+- Generates directory tree
+- Cleans up the temporary repository after processing
+- Returns the tree structure or an error message
 
-The proxy essentially creates a standardized way to interact with JetBrains IDEs, allowing tools like Claude to discover and use IDE-specific capabilities dynamically.
+`github_read_important_files(repo_url: str, file_paths: List[str]) -> dict[str, str]`:
+- Clones the repository
+- Reads specified files
+- Returns a dictionary mapping file paths to their contents
+- Handles file reading errors
+- Cleans up the temporary repository
 
-Would you like me to elaborate on any specific aspect of the code or its functionality?
+3. Error Handling:
+- Uses try-except blocks to handle repository cloning, file reading errors
+- Ensures temporary directories are always cleaned up using `finally` blocks
+- Returns descriptive error messages
+
+4. Performance Optimizations:
+- Uses a hash-based temporary directory naming to potentially reuse cloned repositories
+- Checks for existing repositories before cloning
+- Implements cleanup to prevent accumulation of temporary files
+
+5. Unique Features:
+- Deterministic temporary directory creation
+- Unicode tree representation
+- Flexible file reading with error handling
+
+6. Execution:
+- Can be run as a CLI tool via `mcp-git-ingest`
+- Configured through `pyproject.toml`
+- Depends on `fastmcp` for MCP server functionality
+
+The code is a robust, flexible tool for programmatically exploring and reading GitHub repositories, with a focus on error handling and clean implementation.
+
+Would you like me to elaborate on any specific aspect of the implementation?
 ```
