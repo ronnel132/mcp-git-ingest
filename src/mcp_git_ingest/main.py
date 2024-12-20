@@ -66,12 +66,12 @@ def get_directory_tree(path: str, prefix: str = "") -> str:
     return output
 
 @mcp.tool()
-def github_directory_structure(repo_url: str) -> str:
+def git_directory_structure(repo_url: str) -> str:
     """
-    Clone a GitHub repository and return its directory structure in a tree format.
+    Clone a Git repository and return its directory structure in a tree format.
     
     Args:
-        repo_url: The URL of the GitHub repository
+        repo_url: The URL of the Git repository
         
     Returns:
         A string representation of the repository's directory structure
@@ -80,24 +80,20 @@ def github_directory_structure(repo_url: str) -> str:
         # Clone the repository
         repo_path = clone_repo(repo_url)
         
-        try:
-            # Generate the directory tree
-            tree = get_directory_tree(repo_path)
-            return tree
-        finally:
-            # Clean up
-            shutil.rmtree(repo_path)
+        # Generate the directory tree
+        tree = get_directory_tree(repo_path)
+        return tree
             
     except Exception as e:
         return f"Error: {str(e)}"
 
 @mcp.tool()
-def github_read_important_files(repo_url: str, file_paths: List[str]) -> dict[str, str]:
+def git_read_important_files(repo_url: str, file_paths: List[str]) -> dict[str, str]:
     """
-    Clone a GitHub repository and read the contents of specified files.
+    Read the contents of specified files in a given git repository.
     
     Args:
-        repo_url: The URL of the GitHub repository
+        repo_url: The URL of the Git repository
         file_paths: List of file paths to read (relative to repository root)
         
     Returns:
@@ -106,29 +102,24 @@ def github_read_important_files(repo_url: str, file_paths: List[str]) -> dict[st
     try:
         # Clone the repository
         repo_path = clone_repo(repo_url)
+        results = {}
         
-        try:
-            results = {}
+        for file_path in file_paths:
+            full_path = os.path.join(repo_path, file_path)
             
-            for file_path in file_paths:
-                full_path = os.path.join(repo_path, file_path)
+            # Check if file exists
+            if not os.path.isfile(full_path):
+                results[file_path] = f"Error: File not found"
+                continue
                 
-                # Check if file exists
-                if not os.path.isfile(full_path):
-                    results[file_path] = f"Error: File not found"
-                    continue
-                    
-                try:
-                    with open(full_path, 'r', encoding='utf-8') as f:
-                        results[file_path] = f.read()
-                except Exception as e:
-                    results[file_path] = f"Error reading file: {str(e)}"
+            try:
+                with open(full_path, 'r', encoding='utf-8') as f:
+                    results[file_path] = f.read()
+            except Exception as e:
+                results[file_path] = f"Error reading file: {str(e)}"
+        
+        return results
             
-            return results
-            
-        finally:
-            # Clean up
-            shutil.rmtree(repo_path)
             
     except Exception as e:
         return {"error": f"Failed to process repository: {str(e)}"} 
