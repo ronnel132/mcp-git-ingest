@@ -1,4 +1,5 @@
 # MCP Git Ingest
+[![smithery badge](https://smithery.ai/badge/mcp-git-ingest)](https://smithery.ai/server/mcp-git-ingest)
 
 A Model Context Protocol (MCP) server that helps read GitHub repository structure and important files.
 
@@ -107,3 +108,4 @@ The code is a robust, flexible tool for programmatically exploring and reading G
 
 Would you like me to elaborate on any specific aspect of the implementation?
 ```
+
