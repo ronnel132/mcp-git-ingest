@@ -57,7 +57,9 @@ def get_directory_tree(path: str, prefix: str = "") -> str:
         next_prefix = "    " if is_last else "│   "
         
         entry_path = os.path.join(path, entry)
-        output += prefix + current_prefix + entry + "\n"
+        size = os.path.getsize(entry_path) if os.path.isfile(entry_path) else 0
+        size_str = f" ({size:,} bytes)" if size > 0 else ""
+        output += prefix + current_prefix + entry + size_str + "\n"
         
         if os.path.isdir(entry_path):
             output += get_directory_tree(entry_path, prefix + next_prefix)
