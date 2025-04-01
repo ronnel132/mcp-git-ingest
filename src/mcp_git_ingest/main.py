@@ -110,6 +110,21 @@ async def summarize_file(client: OpenAI, content: str, prompt: str) -> str:
     except Exception as e:
         return f"Error summarizing content: {str(e)}"
 
+def summarize_file_sync(client: OpenAI, content: str, prompt: str) -> str:
+    """Synchronous version of summarize_file"""
+    try:
+        response = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
+                {"role": "system", "content": prompt},
+                {"role": "user", "content": content},
+            ],
+            stream=False
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"Error summarizing content: {str(e)}"
+
 @mcp.tool()
 def git_read_important_files(
     repo_url: str, 
@@ -160,18 +175,11 @@ def git_read_important_files(
             except Exception as e:
                 results[file_path] = f"Error reading file: {str(e)}"
         
-        # Summarize large files in parallel
+        # Summarize large files sequentially instead of using asyncio
         if files_to_summarize:
-            async def process_summaries():
-                tasks = [
-                    summarize_file(client, content, summary_prompt)
-                    for _, content in files_to_summarize
-                ]
-                summaries = await asyncio.gather(*tasks)
-                for (file_path, _), summary in zip(files_to_summarize, summaries):
-                    results[file_path] = f"[SUMMARY] {summary}"
-            
-            asyncio.run(process_summaries())
+            for file_path, content in files_to_summarize:
+                summary = summarize_file_sync(client, content, summary_prompt)
+                results[file_path] = f"[SUMMARY] {summary}"
         
         return results
             
