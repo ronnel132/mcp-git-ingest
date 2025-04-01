@@ -3,22 +3,17 @@
 from fastmcp import FastMCP
 import os
 import subprocess
-from typing import List, Optional
+from typing import List
 import tempfile
 import shutil
 from pathlib import Path
 import hashlib
 import git
-import asyncio
-from openai import OpenAI
-import os
-from mcp_git_ingest.consts import DEFAULT_SUMMARY_PROMPT
 
 mcp = FastMCP(
     "GitHub Tools",
     dependencies=[
         "gitpython",
-        "openai",
     ]
 )
 
@@ -94,45 +89,8 @@ def git_directory_structure(repo_url: str, commit_hash: str = None) -> str:
     except Exception as e:
         return f"Error: {str(e)}"
 
-async def summarize_file(client: OpenAI, content: str, prompt: str) -> str:
-    """Summarize file content using DeepSeek API"""
-    try:
-        response = await asyncio.to_thread(
-            client.chat.completions.create,
-            model="deepseek-chat",
-            messages=[
-                {"role": "system", "content": prompt},
-                {"role": "user", "content": content},
-            ],
-            stream=False
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        return f"Error summarizing content: {str(e)}"
-
-def summarize_file_sync(client: OpenAI, content: str, prompt: str) -> str:
-    """Synchronous version of summarize_file"""
-    try:
-        response = client.chat.completions.create(
-            model="deepseek-chat",
-            messages=[
-                {"role": "system", "content": prompt},
-                {"role": "user", "content": content},
-            ],
-            stream=False
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        return f"Error summarizing content: {str(e)}"
-
 @mcp.tool()
-def git_read_important_files(
-    repo_url: str, 
-    file_paths: List[str], 
-    commit_hash: str = None,
-    summarize_threshold: int = 10000,  # Files larger than 10KB will be summarized
-    summary_prompt: str = DEFAULT_SUMMARY_PROMPT
-) -> dict[str, str]:
+def git_read_important_files(repo_url: str, file_paths: List[str], commit_hash: str = None) -> dict[str, str]:
     """
     Read the contents of specified files in a given git repository.
     
@@ -140,48 +98,31 @@ def git_read_important_files(
         repo_url: The URL of the Git repository
         file_paths: List of file paths to read (relative to repository root)
         commit_hash: Optional specific commit hash to checkout
-        summarize_threshold: Size threshold in bytes above which files will be summarized
-        summary_prompt: Custom prompt for the summarization
         
     Returns:
-        A dictionary mapping file paths to their contents or summaries
+        A dictionary mapping file paths to their contents
     """
     try:
         # Clone the repository
         repo_path = clone_repo(repo_url, commit_hash)
         results = {}
-        files_to_summarize = []
-        
-        # Initialize DeepSeek client if needed
-        deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
-        if not deepseek_api_key:
-            raise Exception("DEEPSEEK_API_KEY environment variable not set")
-        client = OpenAI(api_key=deepseek_api_key, base_url="https://api.deepseek.com")
         
         for file_path in file_paths:
             full_path = os.path.join(repo_path, file_path)
             
+            # Check if file exists
             if not os.path.isfile(full_path):
                 results[file_path] = f"Error: File not found"
                 continue
                 
             try:
                 with open(full_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    if len(content.encode('utf-8')) > summarize_threshold:
-                        files_to_summarize.append((file_path, content))
-                    else:
-                        results[file_path] = content
+                    results[file_path] = f.read()
             except Exception as e:
                 results[file_path] = f"Error reading file: {str(e)}"
         
-        # Summarize large files sequentially instead of using asyncio
-        if files_to_summarize:
-            for file_path, content in files_to_summarize:
-                summary = summarize_file_sync(client, content, summary_prompt)
-                results[file_path] = f"[SUMMARY] {summary}"
-        
         return results
+            
             
     except Exception as e:
         return {"error": f"Failed to process repository: {str(e)}"}
