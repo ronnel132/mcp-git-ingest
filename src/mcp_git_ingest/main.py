@@ -17,29 +17,28 @@ mcp = FastMCP(
     ]
 )
 
-def clone_repo(repo_url: str) -> str:
-    """Clone a repository and return the path. If repository is already cloned in temp directory, reuse it."""
-    # Create a deterministic directory name based on repo URL
-    repo_hash = hashlib.sha256(repo_url.encode()).hexdigest()[:12]
+def clone_repo(repo_url: str, commit_hash: str = None) -> str:
+    """Clone a repository and optionally checkout a specific commit. Return the path."""
+    repo_hash = hashlib.sha256((repo_url + (commit_hash or "")).encode()).hexdigest()[:12]
     temp_dir = os.path.join(tempfile.gettempdir(), f"github_tools_{repo_hash}")
-    
-    # If directory exists and is a valid git repo, return it
+
     if os.path.exists(temp_dir):
         try:
             repo = git.Repo(temp_dir)
             if not repo.bare and repo.remote().url == repo_url:
+                if commit_hash:
+                    repo.git.checkout(commit_hash)
                 return temp_dir
         except:
-            # If there's any error with existing repo, clean it up
             shutil.rmtree(temp_dir, ignore_errors=True)
-    
-    # Create directory and clone repository
+
     os.makedirs(temp_dir, exist_ok=True)
     try:
-        git.Repo.clone_from(repo_url, temp_dir)
+        repo = git.Repo.clone_from(repo_url, temp_dir)
+        if commit_hash:
+            repo.git.checkout(commit_hash)
         return temp_dir
     except Exception as e:
-        # Clean up on error
         shutil.rmtree(temp_dir, ignore_errors=True)
         raise Exception(f"Failed to clone repository: {str(e)}")
 
@@ -66,19 +65,20 @@ def get_directory_tree(path: str, prefix: str = "") -> str:
     return output
 
 @mcp.tool()
-def git_directory_structure(repo_url: str) -> str:
+def git_directory_structure(repo_url: str, commit_hash: str = None) -> str:
     """
     Clone a Git repository and return its directory structure in a tree format.
     
     Args:
         repo_url: The URL of the Git repository
+        commit_hash: Optional specific commit hash to checkout
         
     Returns:
         A string representation of the repository's directory structure
     """
     try:
         # Clone the repository
-        repo_path = clone_repo(repo_url)
+        repo_path = clone_repo(repo_url, commit_hash)
         
         # Generate the directory tree
         tree = get_directory_tree(repo_path)
@@ -88,20 +88,21 @@ def git_directory_structure(repo_url: str) -> str:
         return f"Error: {str(e)}"
 
 @mcp.tool()
-def git_read_important_files(repo_url: str, file_paths: List[str]) -> dict[str, str]:
+def git_read_important_files(repo_url: str, file_paths: List[str], commit_hash: str = None) -> dict[str, str]:
     """
     Read the contents of specified files in a given git repository.
     
     Args:
         repo_url: The URL of the Git repository
         file_paths: List of file paths to read (relative to repository root)
+        commit_hash: Optional specific commit hash to checkout
         
     Returns:
         A dictionary mapping file paths to their contents
     """
     try:
         # Clone the repository
-        repo_path = clone_repo(repo_url)
+        repo_path = clone_repo(repo_url, commit_hash)
         results = {}
         
         for file_path in file_paths:
@@ -122,4 +123,4 @@ def git_read_important_files(repo_url: str, file_paths: List[str]) -> dict[str, 
             
             
     except Exception as e:
-        return {"error": f"Failed to process repository: {str(e)}"} 
+        return {"error": f"Failed to process repository: {str(e)}"}
