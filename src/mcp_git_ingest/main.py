@@ -12,7 +12,7 @@ import git
 import asyncio
 from openai import OpenAI
 import os
-from consts import DEFAULT_SUMMARY_PROMPT
+from mcp_git_ingest.consts import DEFAULT_SUMMARY_PROMPT
 
 mcp = FastMCP(
     "GitHub Tools",
