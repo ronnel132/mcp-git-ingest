@@ -45,8 +45,7 @@ def clone_repo(repo_url: str, commit_hash: str = None) -> str:
 def get_directory_tree(path: str, prefix: str = "") -> str:
     """Generate a tree-like directory structure string"""
     output = ""
-    entries = os.listdir(path)
-    entries.sort()
+    entries = sorted(os.listdir(path))
     
     for i, entry in enumerate(entries):
         if entry.startswith('.git'):
@@ -58,8 +57,8 @@ def get_directory_tree(path: str, prefix: str = "") -> str:
         
         entry_path = os.path.join(path, entry)
         size = os.path.getsize(entry_path) if os.path.isfile(entry_path) else 0
-        size_str = f" ({size:,} bytes)" if size > 0 else ""
-        output += prefix + current_prefix + entry + size_str + "\n"
+        size_str = f" ({size//1000}K)" if size > 1000 else ""
+        output += f"{prefix}{current_prefix}{entry}{size_str}\n"
         
         if os.path.isdir(entry_path):
             output += get_directory_tree(entry_path, prefix + next_prefix)
