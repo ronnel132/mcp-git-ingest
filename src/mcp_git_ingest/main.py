@@ -58,7 +58,21 @@ def get_directory_tree(path: str, prefix: str = "") -> str:
         entry_path = os.path.join(path, entry)
         size = os.path.getsize(entry_path) if os.path.isfile(entry_path) else 0
         size_str = f" ({size//1000}K)" if size > 1000 else ""
-        output += f"{prefix}{current_prefix}{entry}{size_str}\n"
+
+        # Check code files for MCP keywords
+        mcp_flag = ""
+        CODE_EXTENSIONS = {'.js', '.mjs', '.cjs', '.jsx', '.py', '.pyw', '.pyi', '.go', '.ts', '.tsx', '.d.ts'}
+        if os.path.isfile(entry_path) and entry_path.endswith(CODE_EXTENSIONS):
+            try:
+                with open(entry_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    if any(keyword in content for keyword in ["mcp", "mcp.server", "@modelcontextprotocol", 
+                                                            "mark3labs/mcp-go", "metoro-io/mcp-golang"]):
+                        mcp_flag = " [MCP]"
+            except:
+                pass  # Skip if file can't be read
+                
+        output += f"{prefix}{current_prefix}{entry}{size_str}{mcp_flag}\n"
         
         if os.path.isdir(entry_path):
             output += get_directory_tree(entry_path, prefix + next_prefix)
@@ -70,12 +84,18 @@ def git_directory_structure(repo_url: str, commit_hash: str = None) -> str:
     """
     Clone a Git repository and return its directory structure in a tree format.
     
+    The output includes:
+    - File sizes (in KB) for files over 1KB
+    - [MCP] flag for code files containing Model Context Protocol-related keywords
+        - Scans .js, .mjs, .cjs, .jsx, .py, .pyw, .pyi, .go, .ts, .tsx, and .d.ts files
+        - Detects references to MCP packages like @modelcontextprotocol, mark3labs/mcp-go etc.
+    
     Args:
         repo_url: The URL of the Git repository
         commit_hash: Optional specific commit hash to checkout
         
     Returns:
-        A string representation of the repository's directory structure
+        A string representation of the repository's directory structure with size and MCP annotations
     """
     try:
         # Clone the repository
