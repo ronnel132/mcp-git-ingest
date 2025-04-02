@@ -65,13 +65,13 @@ def get_directory_tree(path: str, prefix: str = "") -> str:
         if os.path.isfile(entry_path) and entry_path.endswith(CODE_EXTENSIONS):
             try:
                 with open(entry_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    if any(keyword in content for keyword in ["mcp", "mcp.server", "@modelcontextprotocol", 
-                                                            "mark3labs/mcp-go", "metoro-io/mcp-golang"]):
-                        mcp_flag = " [MCP]"
+                    for line in f:
+                        if any(keyword in line for keyword in ["mcp", "mcp.server", "@modelcontextprotocol", 
+                                                             "mark3labs/mcp-go", "metoro-io/mcp-golang"]):
+                            mcp_flag = " [MCP]"
+                            break
             except:
                 pass  # Skip if file can't be read
-                
         output += f"{prefix}{current_prefix}{entry}{size_str}{mcp_flag}\n"
         
         if os.path.isdir(entry_path):
