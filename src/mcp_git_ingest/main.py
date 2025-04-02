@@ -61,8 +61,8 @@ def get_directory_tree(path: str, prefix: str = "") -> str:
 
         # Check code files for MCP keywords
         mcp_flag = ""
-        CODE_EXTENSIONS = {'.js', '.mjs', '.cjs', '.jsx', '.py', '.pyw', '.pyi', '.go', '.ts', '.tsx', '.d.ts'}
-        if os.path.isfile(entry_path) and entry_path.endswith(CODE_EXTENSIONS):
+        CODE_EXTENSIONS = ('.js', '.mjs', '.cjs', '.jsx', '.py', '.pyw', '.pyi', '.go', '.ts', '.tsx', '.d.ts')
+        if os.path.isfile(entry_path) and any(entry_path.endswith(ext) for ext in CODE_EXTENSIONS):
             try:
                 with open(entry_path, 'r', encoding='utf-8') as f:
                     for line in f:
