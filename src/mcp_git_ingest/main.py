@@ -64,7 +64,7 @@ def get_directory_tree(path: str, prefix: str = "") -> str:
         CODE_EXTENSIONS = ('.js', '.mjs', '.cjs', '.jsx', '.py', '.pyw', '.pyi', '.go', '.ts', '.tsx', '.d.ts')
         if os.path.isfile(entry_path) and (
             any(entry_path.endswith(ext) for ext in CODE_EXTENSIONS) or 
-            entry.lower().startswith('readme')
+            entry.lower().endswith(('readme.md', 'readme.txt', 'readme', 'readme.rst'))
         ):
             try:
                 with open(entry_path, 'r', encoding='utf-8') as f:
