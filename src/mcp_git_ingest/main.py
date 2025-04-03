@@ -59,10 +59,13 @@ def get_directory_tree(path: str, prefix: str = "") -> str:
         size = os.path.getsize(entry_path) if os.path.isfile(entry_path) else 0
         size_str = f" ({size//1000}K)" if size > 1000 else ""
 
-        # Check code files for MCP keywords
+        # Check code files and READMEs for MCP keywords
         mcp_flag = ""
         CODE_EXTENSIONS = ('.js', '.mjs', '.cjs', '.jsx', '.py', '.pyw', '.pyi', '.go', '.ts', '.tsx', '.d.ts')
-        if os.path.isfile(entry_path) and any(entry_path.endswith(ext) for ext in CODE_EXTENSIONS):
+        if os.path.isfile(entry_path) and (
+            any(entry_path.endswith(ext) for ext in CODE_EXTENSIONS) or 
+            entry.lower().startswith('readme')
+        ):
             try:
                 with open(entry_path, 'r', encoding='utf-8') as f:
                     for line in f:
